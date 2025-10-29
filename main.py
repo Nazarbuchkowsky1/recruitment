@@ -20,7 +20,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-BOT_TOKEN = "8058082550:AAGzi2vrlHpclm2YJbqbdvUdFXGIq7sCTIM"
+BOT_TOKEN = "8358942377:AAEVJKtj3SCAOhgKzvFqynrjFH_kabcKbpM"
 
 ADMIN_CHAT_ID = "YOUR_ADMIN_CHAT_ID"
 
