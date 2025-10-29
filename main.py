@@ -80,7 +80,7 @@ async def send_subscription_message(update, context):
 После подписки нажмите «✅ Я подписался» и продолжайте."""
     
     keyboard = [
-        [InlineKeyboardButton("📢 Перейти к каналу", url=f"https://t.me/+NTFE7u-l-lo3NTY6")],
+        [InlineKeyboardButton("📢 Перейти к каналу", url=f"https://t.me/+WWB7YLfH10ExZTk6")],
         [InlineKeyboardButton("✅ Я подписался", callback_data="check_subscription")]
     ]
     
@@ -1257,17 +1257,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(final_message, reply_markup=get_main_menu(), parse_mode='HTML', protect_content=True)
             return
         
-        visa_welcome_text = """🧾 <b>Визовая анкета</b>
+        visa_welcome_text = """📄 Добро пожаловать в систему предварительного заполнения визовой анкеты.
 
-Заполнение займет несколько минут.
-
-<b>Внимание!</b> Убедитесь, что у вас есть под рукой:
-• Загранпаспорт
-• Документы об образовании
-• Справки о доходах
-• Другие документы, которые могут потребоваться
-
-Готовы начать заполнение анкеты?"""
+Анкета используется для оформления рабочей визы в выбранную страну.
+Все сведения обрабатываются только уполномоченными специалистами для проверки документов к подаче в консульство."""
         
         keyboard = [
             [InlineKeyboardButton("✅ Да, начать", callback_data="start_visa_form")]
@@ -2128,6 +2121,8 @@ async def start_form(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return -1
         
         await query.answer()
+
+        # Скрываем главное меню на время заполнения формы (приховуємо без окремого повідомлення)
         
         parts = query.data.split("_")
         country_code = parts[1]
@@ -2143,12 +2138,15 @@ async def start_form(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['form_vacancy'] = vacancy
         context.user_data['form_vacancy_title'] = vacancy['title']
         
-        await safe_edit_message(
-            query,
+        # Відправляємо нове повідомлення замість редагування, щоб попереднє з вакансією не видалялось
+        # Приховуємо меню при цьому
+        await query.message.reply_text(
             "📝 <b>Предварительная анкета</b>\n\n"
             "Пожалуйста, заполните все поля.\n"
             "⚠️ Если пропустите хотя бы одно поле, заявка не будет передана менеджеру.\n\n"
-            "1️⃣ <b>Фамилия, Имя, Отчество:</b>\n\nНапишите ответ ниже в чат 👇"
+            "1️⃣ <b>Фамилия, Имя, Отчество:</b>\n\nНапишите ответ ниже в чат 👇",
+            parse_mode='HTML',
+            reply_markup=ReplyKeyboardRemove()
         )
         
         return FORM_NAME
@@ -2172,7 +2170,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 После подписки нажмите «✅ Я подписался» и продолжайте."""
         
         keyboard = [
-            [InlineKeyboardButton("📢 Перейти до каналу", url=f"https://t.me/+NTFE7u-l-lo3NTY6")],
+            [InlineKeyboardButton("📢 Перейти до каналу", url=f"https://t.me/+WWB7YLfH10ExZTk6")],
             [InlineKeyboardButton("✅ Я підписався", callback_data="check_subscription")]
         ]
         
@@ -4422,11 +4420,14 @@ async def start_visa_form(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return ConversationHandler.END
         
         await query.answer()
-        await query.edit_message_text(
+
+        # Скрываем главное меню на время заполнения визовой анкеты (приховуємо без окремого повідомлення)
+        await query.message.reply_text(
             "🧾 <b>I. Личные данные</b>\n\n"
             "1️⃣ <b>ФИО (как в загранпаспорте):</b>\n\n"
             "Напишите ответ ниже 👇",
-            parse_mode='HTML'
+            parse_mode='HTML',
+            reply_markup=ReplyKeyboardRemove()
         )
         return VISA_Q1
     return ConversationHandler.END
