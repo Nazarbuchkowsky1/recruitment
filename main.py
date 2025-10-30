@@ -1663,6 +1663,8 @@ async def form_name_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode='HTML'
     ,
             protect_content=True
+        ,
+            reply_markup=get_main_menu()
         )
     return FORM_BIRTH_DATE
 
@@ -1690,6 +1692,8 @@ async def form_birth_date_handler(update: Update, context: ContextTypes.DEFAULT_
         parse_mode='HTML'
     ,
             protect_content=True
+        ,
+            reply_markup=get_main_menu()
         )
     return FORM_CITIZENSHIP
 
@@ -1717,6 +1721,8 @@ async def form_citizenship_handler(update: Update, context: ContextTypes.DEFAULT
         parse_mode='HTML'
     ,
             protect_content=True
+        ,
+            reply_markup=get_main_menu()
         )
     return FORM_LOCATION
 
@@ -1744,6 +1750,8 @@ async def form_location_handler(update: Update, context: ContextTypes.DEFAULT_TY
         parse_mode='HTML'
     ,
             protect_content=True
+        ,
+            reply_markup=get_main_menu()
         )
     return FORM_CONTACT
 
@@ -2074,6 +2082,8 @@ async def form_visa_term_handler(update: Update, context: ContextTypes.DEFAULT_T
                 parse_mode='HTML'
             ,
             protect_content=True
+        ,
+                reply_markup=get_main_menu()
         )
             context.user_data['waiting_for_term_text'] = True
             return FORM_VISA_TERM
@@ -4489,10 +4499,10 @@ async def visa_q1_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await text_handler(update, context)
         return ConversationHandler.END
     if not text:
-        await update.message.reply_text("1️⃣ <b>ФИО (как в загранпаспорте):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+        await update.message.reply_text("1️⃣ <b>ФИО (как в загранпаспорте):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
         return VISA_Q1
     store_visa_answer(user_id, 1, text)
-    await update.message.reply_text("2️⃣ <b>Дата и место рождения:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+    await update.message.reply_text("2️⃣ <b>Дата и место рождения:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
     return VISA_Q2
 
 async def visa_q2_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -4504,10 +4514,10 @@ async def visa_q2_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await text_handler(update, context)
         return ConversationHandler.END
     if not text:
-        await update.message.reply_text("2️⃣ <b>Дата и место рождения:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+        await update.message.reply_text("2️⃣ <b>Дата и место рождения:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
         return VISA_Q2
     store_visa_answer(user_id, 2, text)
-    await update.message.reply_text("3️⃣ <b>Гражданство:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+    await update.message.reply_text("3️⃣ <b>Гражданство:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
     return VISA_Q3
 
 async def visa_q3_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -4519,10 +4529,10 @@ async def visa_q3_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await text_handler(update, context)
         return ConversationHandler.END
     if not text:
-        await update.message.reply_text("3️⃣ <b>Гражданство:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+        await update.message.reply_text("3️⃣ <b>Гражданство:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
         return VISA_Q3
     store_visa_answer(user_id, 3, text)
-    await update.message.reply_text("4️⃣ <b>Паспортные данные (номер, срок действия):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+    await update.message.reply_text("4️⃣ <b>Паспортные данные (номер, срок действия):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
     return VISA_Q4
 
 async def visa_q4_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -4534,10 +4544,10 @@ async def visa_q4_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await text_handler(update, context)
         return ConversationHandler.END
     if not text:
-        await update.message.reply_text("4️⃣ <b>Паспортные данные (номер, срок действия):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+        await update.message.reply_text("4️⃣ <b>Паспортные данные (номер, срок действия):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
         return VISA_Q4
     store_visa_answer(user_id, 4, text)
-    await update.message.reply_text("5️⃣ <b>Адрес проживания и прописка:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+    await update.message.reply_text("5️⃣ <b>Адрес проживания и прописка:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
     return VISA_Q5
 
 async def visa_q5_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -4549,10 +4559,10 @@ async def visa_q5_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await text_handler(update, context)
         return ConversationHandler.END
     if not text:
-        await update.message.reply_text("5️⃣ <b>Адрес проживания и прописка:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+        await update.message.reply_text("5️⃣ <b>Адрес проживания и прописка:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
         return VISA_Q5
     store_visa_answer(user_id, 5, text)
-    await update.message.reply_text("6️⃣ <b>Контактные данные (телефон, email):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+    await update.message.reply_text("6️⃣ <b>Контактные данные (телефон, email):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
     return VISA_Q6
 
 async def visa_q6_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -4564,10 +4574,10 @@ async def visa_q6_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await text_handler(update, context)
         return ConversationHandler.END
     if not text:
-        await update.message.reply_text("6️⃣ <b>Контактные данные (телефон, email):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+        await update.message.reply_text("6️⃣ <b>Контактные данные (телефон, email):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
         return VISA_Q6
     store_visa_answer(user_id, 6, text)
-    await update.message.reply_text("7️⃣ <b>Номер телефона мессенджеров (WhatsApp, Telegram):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+    await update.message.reply_text("7️⃣ <b>Номер телефона мессенджеров (WhatsApp, Telegram):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
     return VISA_Q7
 
 async def visa_q7_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -4579,7 +4589,7 @@ async def visa_q7_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await text_handler(update, context)
         return ConversationHandler.END
     if not text:
-        await update.message.reply_text("7️⃣ <b>Номер телефона мессенджеров (WhatsApp, Telegram):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+        await update.message.reply_text("7️⃣ <b>Номер телефона мессенджеров (WhatsApp, Telegram):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
         return VISA_Q7
     store_visa_answer(user_id, 7, text)
     # Питання 8 з варіантами
@@ -4615,10 +4625,10 @@ async def visa_q9_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await text_handler(update, context)
         return ConversationHandler.END
     if not text:
-        await update.message.reply_text("9️⃣ <b>Родители (имена, гражданства):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+        await update.message.reply_text("9️⃣ <b>Родители (имена, гражданства):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
         return VISA_Q9
     store_visa_answer(user_id, 9, text)
-    await update.message.reply_text("🔟 <b>Супруга и дети:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+    await update.message.reply_text("🔟 <b>Супруга и дети:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
     return VISA_Q10
 
 async def visa_q10_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -4630,10 +4640,10 @@ async def visa_q10_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await text_handler(update, context)
         return ConversationHandler.END
     if not text:
-        await update.message.reply_text("🔟 <b>Супруга и дети:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+        await update.message.reply_text("🔟 <b>Супруга и дети:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
         return VISA_Q10
     store_visa_answer(user_id, 10, text)
-    await update.message.reply_text("1️⃣1️⃣ <b>Родственные связи в стране назначения:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+    await update.message.reply_text("1️⃣1️⃣ <b>Родственные связи в стране назначения:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
     return VISA_Q11
 
 async def visa_q11_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -4645,7 +4655,7 @@ async def visa_q11_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await text_handler(update, context)
         return ConversationHandler.END
     if not text:
-        await update.message.reply_text("1️⃣1️⃣ <b>Родственные связи в стране назначения:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+        await update.message.reply_text("1️⃣1️⃣ <b>Родственные связи в стране назначения:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
         return VISA_Q11
     store_visa_answer(user_id, 11, text)
     # Питання 12 з варіантами
@@ -4678,7 +4688,7 @@ async def visa_q13_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await text_handler(update, context)
         return ConversationHandler.END
     if not text:
-        await update.message.reply_text("1️⃣3️⃣ <b>Профессиональный опыт (последние места работы, должности, обязанности)?</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
+        await update.message.reply_text("1️⃣3️⃣ <b>Профессиональный опыт (последние места работы, должности, обязанности)?</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML', reply_markup=get_main_menu())
         return VISA_Q13
     store_visa_answer(user_id, 13, text)
     # Питання 14 з варіантами
