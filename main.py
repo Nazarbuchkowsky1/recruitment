@@ -5154,33 +5154,32 @@ def main():
     import time
     import subprocess
     import os
+    import platform
     
     print("Завершаем все предыдущие запуски Python...")
     try:
-        current_pid = os.getpid()
-        
-        result = subprocess.run(['wmic', 'process', 'where', 'name="python.exe"', 'get', 'ProcessId', '/format:list'], 
-                              capture_output=True, text=True, check=False)
-        
-        if result.stdout:
-            pids = []
-            for line in result.stdout.split('\n'):
-                if 'ProcessId=' in line:
-                    pid = line.split('=')[1].strip()
-                    if pid and int(pid) != current_pid:
-                        pids.append(pid)
-            
-            for pid in pids:
-                try:
-                    subprocess.run(['taskkill', '/F', '/PID', pid], 
+        if platform.system() == 'Windows':
+            current_pid = os.getpid()
+            result = subprocess.run(['wmic', 'process', 'where', 'name="python.exe"', 'get', 'ProcessId', '/format:list'], 
                                   capture_output=True, text=True, check=False)
-                except:
-                    pass
-            
-            print(f"Завершено {len(pids)} процессов Python")
+            if result.stdout:
+                pids = []
+                for line in result.stdout.split('\n'):
+                    if 'ProcessId=' in line:
+                        pid = line.split('=')[1].strip()
+                        if pid and int(pid) != current_pid:
+                            pids.append(pid)
+                for pid in pids:
+                    try:
+                        subprocess.run(['taskkill', '/F', '/PID', pid], 
+                                      capture_output=True, text=True, check=False)
+                    except:
+                        pass
+                print(f"Завершено {len(pids)} процессов Python")
+            else:
+                print("Предыдущих процессов Python не найдено")
         else:
-            print("Предыдущих процессов Python не найдено")
-            
+            print("Не Windows среда — пропускаем завершение процессов.")
     except Exception as e:
         print(f"Ошибка при завершении процессов: {e}")
     
