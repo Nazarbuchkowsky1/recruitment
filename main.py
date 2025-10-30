@@ -539,6 +539,17 @@ def get_main_menu():
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, is_persistent=True)
 
+def is_main_menu_text(text: str) -> bool:
+    return text in {
+        "🧾 Вакансии",
+        "✅ Гарантии",
+        "💬 Связаться с менеджером",
+        "❓ Вопрос - ответ",
+        "🔄 Как мы работаем",
+        "ℹ️ О нас",
+        "📍 Контакты",
+    }
+
 def get_countries_menu():
     keyboard = []
     for country_code, country_data in COUNTRIES.items():
@@ -1631,6 +1642,12 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def form_name_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обробник первого вопроса - ПІБ"""
     text = update.message.text.strip()
+    if is_main_menu_text(text):
+        for key in list(context.user_data.keys()):
+            if key.startswith('form_') or key.startswith('waiting_'):
+                del context.user_data[key]
+        await text_handler(update, context)
+        return -1
     if not text:
         await update.message.reply_text(
             "1️⃣ <b>Фамилия, Имя, Отчество:</b>\n\nНапишите ответ ниже в чат 👇",
@@ -1652,6 +1669,12 @@ async def form_name_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def form_birth_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обробник другого вопроса - дата народження"""
     text = update.message.text.strip()
+    if is_main_menu_text(text):
+        for key in list(context.user_data.keys()):
+            if key.startswith('form_') or key.startswith('waiting_'):
+                del context.user_data[key]
+        await text_handler(update, context)
+        return -1
     if not text:
         await update.message.reply_text(
             "2️⃣ <b>Дата рождения:</b>\n\nНапишите ответ ниже в чат 👇",
@@ -1673,6 +1696,12 @@ async def form_birth_date_handler(update: Update, context: ContextTypes.DEFAULT_
 async def form_citizenship_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обробник третього вопроса - громадянство"""
     text = update.message.text.strip()
+    if is_main_menu_text(text):
+        for key in list(context.user_data.keys()):
+            if key.startswith('form_') or key.startswith('waiting_'):
+                del context.user_data[key]
+        await text_handler(update, context)
+        return -1
     if not text:
         await update.message.reply_text(
             "3️⃣ <b>Гражданство:</b>\n\nНапишите ответ ниже в чат 👇",
@@ -1694,6 +1723,12 @@ async def form_citizenship_handler(update: Update, context: ContextTypes.DEFAULT
 async def form_location_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обробник четвертого вопроса - місцезнаходження"""
     text = update.message.text.strip()
+    if is_main_menu_text(text):
+        for key in list(context.user_data.keys()):
+            if key.startswith('form_') or key.startswith('waiting_'):
+                del context.user_data[key]
+        await text_handler(update, context)
+        return -1
     if not text:
         await update.message.reply_text(
             "4️⃣ <b>Где вы сейчас находитесь (страна / город):</b>\n\nНапишите ответ ниже в чат 👇",
@@ -1715,6 +1750,12 @@ async def form_location_handler(update: Update, context: ContextTypes.DEFAULT_TY
 async def form_contact_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обробник п'ятого вопроса - контакт"""
     text = update.message.text.strip()
+    if is_main_menu_text(text):
+        for key in list(context.user_data.keys()):
+            if key.startswith('form_') or key.startswith('waiting_'):
+                del context.user_data[key]
+        await text_handler(update, context)
+        return -1
     if not text:
         await update.message.reply_text(
             "5️⃣ <b>Контактный номер для связи:</b>\n(укажите WhatsApp / Telegram — где вам удобнее общаться)\n📱 Напишите ответ ниже в чат 👇",
@@ -2039,6 +2080,12 @@ async def form_visa_term_handler(update: Update, context: ContextTypes.DEFAULT_T
         
     elif update.message and context.user_data.get('waiting_for_term_text', False):
         text = update.message.text.strip()
+        if is_main_menu_text(text):
+            for key in list(context.user_data.keys()):
+                if key.startswith('form_') or key.startswith('waiting_'):
+                    del context.user_data[key]
+            await text_handler(update, context)
+            return -1
         context.user_data['form_visa_term'] = text
         
         user_id = update.message.from_user.id
@@ -2146,7 +2193,7 @@ async def start_form(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "⚠️ Если пропустите хотя бы одно поле, заявка не будет передана менеджеру.\n\n"
             "1️⃣ <b>Фамилия, Имя, Отчество:</b>\n\nНапишите ответ ниже в чат 👇",
             parse_mode='HTML',
-            reply_markup=ReplyKeyboardRemove()
+            reply_markup=get_main_menu()
         )
         
         return FORM_NAME
@@ -4421,13 +4468,13 @@ async def start_visa_form(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         await query.answer()
 
-        # Скрываем главное меню на время заполнения визовой анкеты (приховуємо без окремого повідомлення)
+        # Показываем первое вопрос и оставляем главное меню доступным
         await query.message.reply_text(
             "🧾 <b>I. Личные данные</b>\n\n"
             "1️⃣ <b>ФИО (как в загранпаспорте):</b>\n\n"
             "Напишите ответ ниже 👇",
             parse_mode='HTML',
-            reply_markup=ReplyKeyboardRemove()
+            reply_markup=get_main_menu()
         )
         return VISA_Q1
     return ConversationHandler.END
@@ -4436,6 +4483,11 @@ async def start_visa_form(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q1_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     if not text:
         await update.message.reply_text("1️⃣ <b>ФИО (как в загранпаспорте):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
         return VISA_Q1
@@ -4446,6 +4498,11 @@ async def visa_q1_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q2_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     if not text:
         await update.message.reply_text("2️⃣ <b>Дата и место рождения:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
         return VISA_Q2
@@ -4456,6 +4513,11 @@ async def visa_q2_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q3_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     if not text:
         await update.message.reply_text("3️⃣ <b>Гражданство:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
         return VISA_Q3
@@ -4466,6 +4528,11 @@ async def visa_q3_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q4_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     if not text:
         await update.message.reply_text("4️⃣ <b>Паспортные данные (номер, срок действия):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
         return VISA_Q4
@@ -4476,6 +4543,11 @@ async def visa_q4_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q5_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     if not text:
         await update.message.reply_text("5️⃣ <b>Адрес проживания и прописка:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
         return VISA_Q5
@@ -4486,6 +4558,11 @@ async def visa_q5_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q6_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     if not text:
         await update.message.reply_text("6️⃣ <b>Контактные данные (телефон, email):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
         return VISA_Q6
@@ -4496,6 +4573,11 @@ async def visa_q6_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q7_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     if not text:
         await update.message.reply_text("7️⃣ <b>Номер телефона мессенджеров (WhatsApp, Telegram):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
         return VISA_Q7
@@ -4527,6 +4609,11 @@ async def visa_q8_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q9_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     if not text:
         await update.message.reply_text("9️⃣ <b>Родители (имена, гражданства):</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
         return VISA_Q9
@@ -4537,6 +4624,11 @@ async def visa_q9_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q10_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     if not text:
         await update.message.reply_text("🔟 <b>Супруга и дети:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
         return VISA_Q10
@@ -4547,6 +4639,11 @@ async def visa_q10_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q11_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     if not text:
         await update.message.reply_text("1️⃣1️⃣ <b>Родственные связи в стране назначения:</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
         return VISA_Q11
@@ -4575,6 +4672,11 @@ async def visa_q12_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q13_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     if not text:
         await update.message.reply_text("1️⃣3️⃣ <b>Профессиональный опыт (последние места работы, должности, обязанности)?</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
         return VISA_Q13
@@ -4611,6 +4713,11 @@ async def visa_q14_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q14_detail_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     store_visa_answer(user_id, 14, f"Да: {text}")
     await update.message.reply_text(
         "1️⃣5️⃣ <b>Наличие водительских прав?</b>",
@@ -4646,6 +4753,11 @@ async def visa_q15_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q15_detail_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     store_visa_answer(user_id, 15, f"Да: {text}")
     await update.message.reply_text(
         "1️⃣6️⃣ <b>Есть ли опыт работы за границей?</b>",
@@ -4689,6 +4801,11 @@ async def visa_q17_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q18_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     if not text:
         await update.message.reply_text("1️⃣8️⃣ <b>В какой стране вы планируете работать сейчас?</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
         return VISA_Q18
@@ -4699,6 +4816,11 @@ async def visa_q18_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q19_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     if not text:
         await update.message.reply_text("1️⃣9️⃣ <b>Почему выбрали именно эту страну?</b>\n\nНапишите ответ ниже 👇", parse_mode='HTML')
         return VISA_Q19
@@ -4780,6 +4902,11 @@ async def visa_q23_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q23_detail_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     store_visa_answer(user_id, 23, f"Да: {text}")
     await update.message.reply_text(
         "2️⃣4️⃣ <b>Судимости, уголовные дела или административные наказания?</b>",
@@ -4868,6 +4995,11 @@ async def visa_q28_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def visa_q28_detail_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     user_id = update.message.from_user.id
+    if is_main_menu_text(text):
+        if user_id in visa_form_storage:
+            del visa_form_storage[user_id]
+        await text_handler(update, context)
+        return ConversationHandler.END
     store_visa_answer(user_id, 28, f"Да: {text}")
     await update.message.reply_text(
         "✅ <b>VII. Подтверждения и согласия</b>\n\n2️⃣9️⃣ <b>Подтверждаете ли вы достоверность предоставленных данных?</b>",
