@@ -5231,7 +5231,13 @@ def main():
                 MessageHandler(filters.TEXT & ~filters.COMMAND, form_visa_term_handler)
             ]
         },
-        fallbacks=[MessageHandler(filters.TEXT & ~filters.COMMAND, cancel_form)]
+        # Прерываем заполнение формы ТОЛЬКО при нажатии кнопок главного меню
+        fallbacks=[
+            MessageHandler(
+                filters.Regex(r"^(🧾 Вакансии|✅ Гарантии|💬 Связаться с менеджером|❓ Вопрос - ответ|🔄 Как мы работаем|ℹ️ О нас|📍 Контакты)$"),
+                cancel_form
+            )
+        ]
     )
     
     # Візова анкета handler
@@ -5273,7 +5279,13 @@ def main():
             VISA_Q29: [CallbackQueryHandler(visa_q29_handler, pattern="^visa_q29_")],
             VISA_Q30: [CallbackQueryHandler(visa_q30_handler, pattern="^visa_q30_")],
         },
-        fallbacks=[MessageHandler(filters.TEXT & ~filters.COMMAND, cancel_visa_form)]
+        # Прерываем визовую анкету ТОЛЬКО при нажатии кнопок главного меню
+        fallbacks=[
+            MessageHandler(
+                filters.Regex(r"^(🧾 Вакансии|✅ Гарантии|💬 Связаться с менеджером|❓ Вопрос - ответ|🔄 Как мы работаем|ℹ️ О нас|📍 Контакты)$"),
+                cancel_visa_form
+            )
+        ]
     )
     
     application.add_handler(form_conv_handler)
