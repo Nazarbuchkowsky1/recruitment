@@ -60,6 +60,19 @@ async def safe_edit_message(query, text, reply_markup=None, parse_mode='HTML'):
             parse_mode=parse_mode
         )
 
+async def get_channel_link(bot):
+    """Получает ссылку на канал (username или invite link)"""
+    try:
+        chat = await bot.get_chat(CHANNEL_ID)
+        if chat.username:
+            return f"https://t.me/{chat.username}"
+        else:
+            # Если нет username, используем публичную ссылку
+            return "https://t.me/centre_of_employment"
+    except Exception as e:
+        logger.error(f"Ошибка получения ссылки на канал: {e}")
+        return "https://t.me/centre_of_employment"
+
 async def check_subscription(bot, user_id):
     """Проверяет подписан ли пользователь на канал"""
     try:
@@ -79,8 +92,9 @@ async def send_subscription_message(update, context):
 
 После подписки нажмите «✅ Я подписался» и продолжайте."""
     
+    channel_link = await get_channel_link(context.bot)
     keyboard = [
-        [InlineKeyboardButton("📢 Перейти к каналу", url=f"https://t.me/+xG5QAaLGbT03NDky")],
+        [InlineKeyboardButton("📢 Перейти к каналу", url=channel_link)],
         [InlineKeyboardButton("✅ Я подписался", callback_data="check_subscription")]
     ]
     
@@ -2226,8 +2240,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 После подписки нажмите «✅ Я подписался» и продолжайте."""
         
+        channel_link = await get_channel_link(context.bot)
         keyboard = [
-            [InlineKeyboardButton("📢 Перейти до каналу", url=f"https://t.me/+xG5QAaLGbT03NDky")],
+            [InlineKeyboardButton("📢 Перейти до каналу", url=channel_link)],
             [InlineKeyboardButton("✅ Я підписався", callback_data="check_subscription")]
         ]
         
