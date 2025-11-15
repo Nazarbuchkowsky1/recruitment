@@ -80,7 +80,7 @@ async def send_subscription_message(update, context):
 После подписки нажмите «✅ Я подписался» и продолжайте."""
     
     keyboard = [
-        [InlineKeyboardButton("📢 Перейти к каналу", url=f"https://t.me/+WWB7YLfH10ExZTk6")],
+        [InlineKeyboardButton("📢 Перейти к каналу", url=f"https://t.me/+xG5QAaLGbT03NDky")],
         [InlineKeyboardButton("✅ Я подписался", callback_data="check_subscription")]
     ]
     
@@ -2227,7 +2227,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 После подписки нажмите «✅ Я подписался» и продолжайте."""
         
         keyboard = [
-            [InlineKeyboardButton("📢 Перейти до каналу", url=f"https://t.me/+WWB7YLfH10ExZTk6")],
+            [InlineKeyboardButton("📢 Перейти до каналу", url=f"https://t.me/+xG5QAaLGbT03NDky")],
             [InlineKeyboardButton("✅ Я підписався", callback_data="check_subscription")]
         ]
         
