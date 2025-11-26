@@ -5142,22 +5142,39 @@ def main():
     # Зазначте: для роботи потрібно встановити: pip install "python-telegram-bot[job-queue]"
     # Для тестування використовуйте команду /send_notifications
     if application.job_queue is not None:
-        from datetime import time as dt_time
+        from datetime import datetime, timedelta
         import pytz
         
         # Український час (UTC+2 або UTC+3)
         ukraine_tz = pytz.timezone('Europe/Kyiv')
-        # Час запуску: 00:00 за українським часом
-        run_time = dt_time(hour=0, minute=0, second=0)
         
-        # Запускаємо щодня о 00:00 за українським часом
-        application.job_queue.run_daily(
+        # Розраховуємо час наступного запуску о 00:00 за українським часом
+        now_utc = datetime.now(pytz.UTC)
+        now_ukraine = now_utc.astimezone(ukraine_tz)
+        
+        # Наступна північ за українським часом
+        if now_ukraine.hour == 0 and now_ukraine.minute < 5:
+            # Якщо вже після півночі, але дуже рано, запускаємо зараз
+            next_run_ukraine = now_ukraine.replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            # Інакше - наступна північ
+            next_run_ukraine = (now_ukraine + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        # Конвертуємо в UTC
+        next_run_utc = next_run_ukraine.astimezone(pytz.UTC)
+        
+        # Розраховуємо затримку до першого запуску
+        delay_seconds = (next_run_utc - now_utc).total_seconds()
+        if delay_seconds < 0:
+            delay_seconds += 86400  # Додаємо день, якщо вже минуло
+        
+        # Запускаємо щодня о 00:00 за українським часом (кожні 24 години)
+        application.job_queue.run_repeating(
             send_notifications_job,
-            time=run_time,
-            days=(0, 1, 2, 3, 4, 5, 6),  # Кожен день
-            timezone=ukraine_tz
+            interval=86400,  # 24 години
+            first=delay_seconds
         )
-        logger.info("Планувальник нагадувань увімкнено (щодня о 00:00 за українським часом)")
+        logger.info(f"Планувальник нагадувань увімкнено (щодня о 00:00 за українським часом, перший запуск через {delay_seconds/3600:.1f} годин)")
     else:
         logger.warning("JobQueue не доступний. Для роботи нагадувань встановіть: pip install \"python-telegram-bot[job-queue]\"")
     
