@@ -4162,15 +4162,26 @@ async def send_notifications_job(context: ContextTypes.DEFAULT_TYPE):
                 else:
                     raise
         
-        # Обробляємо дані в пам'яті
+        # Обробляємо дані в пам'яті (беремо тільки перший рядок для кожного user_id)
         user_data = {}  # {user_id: {'row_index': int, 'days': int}}
+        seen_user_ids = set()  # Для відстеження дублікатів
         
         for i, row in enumerate(all_values[1:], start=2):  # Пропускаємо заголовок
             if len(row) > 0 and row[0].strip():
                 try:
                     user_id = int(row[0])
-                    days = int(row[1]) if len(row) > 1 and row[1].strip() else 7
-                    user_data[user_id] = {'row_index': i, 'days': days}
+                    # Беремо тільки перший рядок для кожного user_id
+                    if user_id not in seen_user_ids:
+                        seen_user_ids.add(user_id)
+                        # Якщо значення порожнє або невалідне, встановлюємо 7
+                        if len(row) > 1 and row[1].strip():
+                            try:
+                                days = int(row[1])
+                            except ValueError:
+                                days = 7
+                        else:
+                            days = 7
+                        user_data[user_id] = {'row_index': i, 'days': days}
                 except (ValueError, IndexError):
                     continue
         
@@ -4186,6 +4197,18 @@ async def send_notifications_job(context: ContextTypes.DEFAULT_TYPE):
             try:
                 current_days = data['days']
                 row_index = data['row_index']
+                
+                # Перевіряємо оригінальне значення з таблиці
+                original_value = all_values[row_index - 1][1] if len(all_values[row_index - 1]) > 1 else ''
+                was_empty = not original_value or not original_value.strip()
+                
+                # Якщо значення було порожнє, встановлюємо 6 (бо завтра буде 5, і так далі)
+                # Але якщо вже 7 в пам'яті (що означає, що ми встановили за замовчуванням), то встановлюємо 6
+                if was_empty and current_days == 7:
+                    # Встановлюємо 6, щоб завтра стало 5
+                    updates.append({'row': row_index, 'col': 2, 'value': '6'})
+                    updated_count += 1
+                    continue
                 
                 if current_days <= 1:
                     # Якщо лічильник 0 або 1 - надсилаємо нагадування
@@ -4209,39 +4232,52 @@ async def send_notifications_job(context: ContextTypes.DEFAULT_TYPE):
                     updates.append({'row': row_index, 'col': 2, 'value': str(current_days - 1)})
                 
                 updated_count += 1
-                
-                # Пауза між обробкою користувачів
-                if updated_count % 10 == 0:  # Пауза кожні 10 користувачів
-                    await asyncio.sleep(1)
                     
             except Exception as e:
                 logger.error(f"Помилка обробки користувача {user_id}: {e}")
         
-        # Масове оновлення даних в таблиці
+        # Масове оновлення даних в таблиці - розподіляємо на весь день
         if updates:
-            # Оновлюємо батчами по 10, щоб не перевищити ліміт
-            batch_size = 10
-            for i in range(0, len(updates), batch_size):
+            # Оновлюємо маленькими батчами з великими паузами, щоб не перевищити ліміт
+            batch_size = 5  # Менший розмір батча
+            total_batches = (len(updates) + batch_size - 1) // batch_size
+            
+            logger.info(f"Оновлення {len(updates)} записів у {total_batches} батчах (по {batch_size} записів)")
+            
+            for batch_num, i in enumerate(range(0, len(updates), batch_size), 1):
                 batch = updates[i:i + batch_size]
                 for attempt in range(max_retries):
                     try:
+                        # Оновлюємо по одному запису в батчі з паузами
                         for update in batch:
                             sheet.update_cell(update['row'], update['col'], update['value'])
+                            # Пауза після кожного оновлення
+                            await asyncio.sleep(1)
+                        logger.info(f"Оновлено батч {batch_num}/{total_batches} ({len(batch)} записів)")
                         break
                     except APIError as e:
                         if "429" in str(e) or "Quota exceeded" in str(e):
                             if attempt < max_retries - 1:
-                                wait_time = retry_delay * (attempt + 1) * 2
+                                wait_time = retry_delay * (attempt + 1) * 5  # Більша затримка
                                 logger.warning(f"Перевищення квоти API при оновленні. Очікування {wait_time} секунд...")
                                 await asyncio.sleep(wait_time)
                             else:
-                                logger.error(f"Не вдалось оновити дані після {max_retries} спроб")
+                                logger.error(f"Не вдалось оновити батч {batch_num} після {max_retries} спроб")
+                                # Продовжуємо з наступним батчем
+                                break
                         else:
                             raise
                 
-                # Пауза між батчами
+                # Велика пауза між батчами (розподіляємо на весь день)
                 if i + batch_size < len(updates):
-                    await asyncio.sleep(2)
+                    # Розраховуємо паузу так, щоб розподілити оновлення на ~12-16 годин
+                    # Якщо залишилось багато батчів, робимо більші паузи
+                    remaining_batches = total_batches - batch_num
+                    if remaining_batches > 0:
+                        # Розподіляємо на ~14 годин (50400 секунд)
+                        pause_time = min(300, max(30, 50400 // remaining_batches))  # Від 30 сек до 5 хв
+                        logger.info(f"Пауза {pause_time} секунд перед наступним батчем...")
+                        await asyncio.sleep(pause_time)
         
         logger.info(f"Оновлення завершено: надіслано {sent_count}, оновлено {updated_count}")
         
@@ -5102,12 +5138,26 @@ def main():
     
     application.add_error_handler(error_handler)
     
-    # Налаштування щоденного відправлення повідомлень (кожні 24 години)
+    # Налаштування щоденного відправлення повідомлень о 00:00 за українським часом
     # Зазначте: для роботи потрібно встановити: pip install "python-telegram-bot[job-queue]"
     # Для тестування використовуйте команду /send_notifications
     if application.job_queue is not None:
-        application.job_queue.run_repeating(send_notifications_job, interval=86400, first=10)
-        logger.info("Планувальник нагадувань увімкнено (кожні 24 години)")
+        from datetime import time as dt_time
+        import pytz
+        
+        # Український час (UTC+2 або UTC+3)
+        ukraine_tz = pytz.timezone('Europe/Kyiv')
+        # Час запуску: 00:00 за українським часом
+        run_time = dt_time(hour=0, minute=0, second=0)
+        
+        # Запускаємо щодня о 00:00 за українським часом
+        application.job_queue.run_daily(
+            send_notifications_job,
+            time=run_time,
+            days=(0, 1, 2, 3, 4, 5, 6),  # Кожен день
+            timezone=ukraine_tz
+        )
+        logger.info("Планувальник нагадувань увімкнено (щодня о 00:00 за українським часом)")
     else:
         logger.warning("JobQueue не доступний. Для роботи нагадувань встановіть: pip install \"python-telegram-bot[job-queue]\"")
     
