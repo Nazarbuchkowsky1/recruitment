@@ -5032,7 +5032,11 @@ def main():
     # Налаштування щоденного відправлення повідомлень (кожні 24 години)
     # Зазначте: для роботи потрібно встановити: pip install "python-telegram-bot[job-queue]"
     # Для тестування використовуйте команду /send_notifications
-    application.job_queue.run_repeating(send_notifications_job, interval=86400, first=10)
+    if application.job_queue is not None:
+        application.job_queue.run_repeating(send_notifications_job, interval=86400, first=10)
+        logger.info("Планувальник нагадувань увімкнено (кожні 24 години)")
+    else:
+        logger.warning("JobQueue не доступний. Для роботи нагадувань встановіть: pip install \"python-telegram-bot[job-queue]\"")
     
     logger.info("Бот запущен...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
