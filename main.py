@@ -5032,7 +5032,7 @@ def main():
     # Налаштування щоденного відправлення повідомлень (кожні 24 години)
     # Зазначте: для роботи потрібно встановити: pip install "python-telegram-bot[job-queue]"
     # Для тестування використовуйте команду /send_notifications
-    # application.job_queue.run_repeating(send_notifications_job, interval=86400, first=10)
+    application.job_queue.run_repeating(send_notifications_job, interval=86400, first=10)
     
     logger.info("Бот запущен...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
