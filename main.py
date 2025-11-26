@@ -4129,20 +4129,63 @@ async def send_notification_to_user(bot, user_id, message_text, button_text):
 
 async def send_notifications_job(context: ContextTypes.DEFAULT_TYPE):
     """Job для оновлення лічильників та відправки нагадувань"""
+    import asyncio
+    import time
+    from gspread.exceptions import APIError
+    
     try:
         logger.info("Початок щоденного оновлення нагадувань...")
         
-        # Отримуємо всі user_id з таблиці
-        user_ids = get_all_users_for_notifications()
-        logger.info(f"Знайдено {len(user_ids)} користувачів у таблиці")
+        # Отримуємо всі дані з таблиці один раз
+        sheet = get_sheet_client()
+        if sheet is None:
+            logger.error("Не вдалось підключитись до Google Sheets")
+            return
+        
+        # Отримуємо всі дані одним запитом
+        max_retries = 3
+        retry_delay = 2
+        
+        for attempt in range(max_retries):
+            try:
+                all_values = sheet.get_all_values()
+                break
+            except APIError as e:
+                if "429" in str(e) or "Quota exceeded" in str(e):
+                    if attempt < max_retries - 1:
+                        wait_time = retry_delay * (attempt + 1)
+                        logger.warning(f"Перевищення квоти API. Очікування {wait_time} секунд перед повторенням...")
+                        await asyncio.sleep(wait_time)
+                    else:
+                        logger.error(f"Не вдалось отримати дані після {max_retries} спроб")
+                        return
+                else:
+                    raise
+        
+        # Обробляємо дані в пам'яті
+        user_data = {}  # {user_id: {'row_index': int, 'days': int}}
+        
+        for i, row in enumerate(all_values[1:], start=2):  # Пропускаємо заголовок
+            if len(row) > 0 and row[0].strip():
+                try:
+                    user_id = int(row[0])
+                    days = int(row[1]) if len(row) > 1 and row[1].strip() else 7
+                    user_data[user_id] = {'row_index': i, 'days': days}
+                except (ValueError, IndexError):
+                    continue
+        
+        logger.info(f"Знайдено {len(user_data)} користувачів у таблиці")
         
         sent_count = 0
         updated_count = 0
         
-        for user_id in user_ids:
+        # Підготовлюємо дані для масового оновлення
+        updates = []
+        
+        for user_id, data in user_data.items():
             try:
-                # Отримуємо поточне значення лічильника
-                current_days = get_reminder_days(user_id)
+                current_days = data['days']
+                row_index = data['row_index']
                 
                 if current_days <= 1:
                     # Якщо лічильник 0 або 1 - надсилаємо нагадування
@@ -4160,15 +4203,45 @@ async def send_notifications_job(context: ContextTypes.DEFAULT_TYPE):
                             logger.error(f"Не вдалось надіслати нагадування користувачу {user_id}")
                     
                     # Встановлюємо знову на 7
-                    update_reminder_days(user_id, 7)
+                    updates.append({'row': row_index, 'col': 2, 'value': '7'})
                 else:
                     # Зменшуємо лічильник на 1
-                    update_reminder_days(user_id, current_days - 1)
+                    updates.append({'row': row_index, 'col': 2, 'value': str(current_days - 1)})
                 
                 updated_count += 1
+                
+                # Пауза між обробкою користувачів
+                if updated_count % 10 == 0:  # Пауза кожні 10 користувачів
+                    await asyncio.sleep(1)
                     
             except Exception as e:
                 logger.error(f"Помилка обробки користувача {user_id}: {e}")
+        
+        # Масове оновлення даних в таблиці
+        if updates:
+            # Оновлюємо батчами по 10, щоб не перевищити ліміт
+            batch_size = 10
+            for i in range(0, len(updates), batch_size):
+                batch = updates[i:i + batch_size]
+                for attempt in range(max_retries):
+                    try:
+                        for update in batch:
+                            sheet.update_cell(update['row'], update['col'], update['value'])
+                        break
+                    except APIError as e:
+                        if "429" in str(e) or "Quota exceeded" in str(e):
+                            if attempt < max_retries - 1:
+                                wait_time = retry_delay * (attempt + 1) * 2
+                                logger.warning(f"Перевищення квоти API при оновленні. Очікування {wait_time} секунд...")
+                                await asyncio.sleep(wait_time)
+                            else:
+                                logger.error(f"Не вдалось оновити дані після {max_retries} спроб")
+                        else:
+                            raise
+                
+                # Пауза між батчами
+                if i + batch_size < len(updates):
+                    await asyncio.sleep(2)
         
         logger.info(f"Оновлення завершено: надіслано {sent_count}, оновлено {updated_count}")
         
