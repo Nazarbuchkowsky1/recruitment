@@ -2181,7 +2181,15 @@ async def start_form(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()
+    
+    # Обробка застарілих callback query
+    try:
+        await query.answer()
+    except telegram.error.BadRequest as e:
+        # Ігноруємо помилку, якщо query застарілий
+        if "too old" in str(e) or "timeout" in str(e) or "invalid" in str(e):
+            return  # Просто виходимо, не обробляємо застарілий запит
+        raise  # Інакше пробрасываем помилку далі
     
     user_id = query.from_user.id
     
