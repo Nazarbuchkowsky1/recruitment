@@ -113,7 +113,11 @@ COUNTRIES = {
     "germany": {"name": "🇩🇪 Германия", "file": "vacancies_germany.json"},
     "poland": {"name": "🇵🇱 Польша", "file": "vacancies_poland.json"},
     "france": {"name": "🇫🇷 Франция", "file": "vacancies_france.json"},
-    "canada": {"name": "🇨🇦 Канада", "file": "vacancies_canada.json"}
+    "canada": {"name": "🇨🇦 Канада", "file": "vacancies_canada.json"},
+    "slovakia": {"name": "🇸🇰 Словакия", "file": "vacancies_slovakia.json"},
+    "belgium": {"name": "🇧🇪 Бельгия", "file": "vacancies_belgium.json"},
+    "austria": {"name": "🇦🇹 Австрия", "file": "vacancies_austria.json"},
+    "usa": {"name": "🇺🇸 США", "file": "vacancies_usa.json"}
 }
 
 def load_qa():
@@ -547,7 +551,7 @@ async def send_to_channel(context, form_data):
 def get_main_menu():
     keyboard = [
         ["🧾 Вакансии", "✅ Гарантии"],
-        ["💬 Связаться с менеджером", "❓ Вопрос - ответ"],
+        ["💬 Связаться с менеджером"],
         ["🔄 Как мы работаем", "ℹ️ О нас"],
         ["📍 Контакты"]
     ]
@@ -558,7 +562,6 @@ def is_main_menu_text(text: str) -> bool:
         "🧾 Вакансии",
         "✅ Гарантии",
         "💬 Связаться с менеджером",
-        "❓ Вопрос - ответ",
         "🔄 Как мы работаем",
         "ℹ️ О нас",
         "📍 Контакты",
@@ -1501,33 +1504,6 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ Ошибка загрузки видео", protect_content=True)
     
     
-    elif text == "❓ Вопрос - ответ":
-        qa_list = load_qa()
-        if qa_list:
-            qa = qa_list[0]
-            qa_text = f"""
-<b>Вопрос:</b> {qa['question']}
-
-<b>Ответ:</b> {qa['answer']}
-
-<i>Вопрос 1 из {len(qa_list)}</i>
-            """
-            await update.message.reply_text(
-                qa_text,
-                reply_markup=get_qa_menu(0),
-                parse_mode='HTML'
-            ,
-            protect_content=True
-        )
-        else:
-            await update.message.reply_text(
-                "❓ <b>Вопрос - ответ</b>\n\nИнформация будет добавлена.",
-                reply_markup=get_main_menu(),
-                parse_mode='HTML'
-            ,
-            protect_content=True
-        )
-    
     elif text == "🔄 Как мы работаем":
         workflow_text = """❗️ <b>Менеджер не предоставляет информацию, которая уже есть в боте.</b>
 Он выполняет консультативную функцию и помогает по вопросам, связанным с вашей заявкой.
@@ -1536,7 +1512,6 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 • «Лицензия» — чтобы убедиться в наличии лицензии компании или менеджера.
 • «Отзывы» — чтобы ознакомиться с отзывами других пользователей.
 • «Процесс работы» — чтобы изучить, как происходит трудоустройство и подготовка документов.
-• «Вопрос-ответ» — часто задаваемые вопросы, с которыми также обязательно ознакомьтесь.
 
 ✅ <b>Только после ознакомления со всей информацией выбирайте вакансию и подавайте заявку.</b>"""
         
@@ -5249,7 +5224,7 @@ def main():
         # Прерываем заполнение формы ТОЛЬКО при нажатии кнопок главного меню
         fallbacks=[
             MessageHandler(
-                filters.Regex(r"^(🧾 Вакансии|✅ Гарантии|💬 Связаться с менеджером|❓ Вопрос - ответ|🔄 Как мы работаем|ℹ️ О нас|📍 Контакты)$"),
+                filters.Regex(r"^(🧾 Вакансии|✅ Гарантии|💬 Связаться с менеджером|🔄 Как мы работаем|ℹ️ О нас|📍 Контакты)$"),
                 cancel_form
             )
         ]
@@ -5297,7 +5272,7 @@ def main():
         # Прерываем визовую анкету ТОЛЬКО при нажатии кнопок главного меню
         fallbacks=[
             MessageHandler(
-                filters.Regex(r"^(🧾 Вакансии|✅ Гарантии|💬 Связаться с менеджером|❓ Вопрос - ответ|🔄 Как мы работаем|ℹ️ О нас|📍 Контакты)$"),
+                filters.Regex(r"^(🧾 Вакансии|✅ Гарантии|💬 Связаться с менеджером|🔄 Как мы работаем|ℹ️ О нас|📍 Контакты)$"),
                 cancel_visa_form
             )
         ]
