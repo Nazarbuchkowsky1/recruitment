@@ -550,9 +550,9 @@ async def send_to_channel(context, form_data):
 
 def get_main_menu():
     keyboard = [
-        ["🧾 Вакансии", "✅ Гарантии"],
+        ["🧾 Вакансии"],
         ["💬 Связаться с менеджером"],
-        ["🔄 Как мы работаем", "ℹ️ О нас"],
+        ["ℹ️ О нас"],
         ["📍 Контакты"]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, is_persistent=True)
@@ -560,9 +560,7 @@ def get_main_menu():
 def is_main_menu_text(text: str) -> bool:
     return text in {
         "🧾 Вакансии",
-        "✅ Гарантии",
         "💬 Связаться с менеджером",
-        "🔄 Как мы работаем",
         "ℹ️ О нас",
         "📍 Контакты",
     }
@@ -1518,7 +1516,6 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             with open("logo.jpg", 'rb') as logo:
                 keyboard = [
-                    [InlineKeyboardButton("📖 Наша история", callback_data="about_history")],
                     [InlineKeyboardButton("🏢 Наши представительства", callback_data="about_offices")]
                 ]
                 await update.message.reply_photo(
@@ -1531,7 +1528,6 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logger.error(f"Ошибка отправки logo: {str(e)}")
             keyboard = [
-                [InlineKeyboardButton("📖 Наша история", callback_data="about_history")],
                 [InlineKeyboardButton("🏢 Наши представительства", callback_data="about_offices")]
             ]
             await update.message.reply_text(
