@@ -4014,15 +4014,34 @@ Empress Business Centre (2-й этаж)
     
     elif data == "check_subscription":
         user_id = query.from_user.id
-        
+
         if await check_subscription(context.bot, user_id):
-            await query.edit_message_text(
-                "✅ <b>Спасибо за подписку!</b>\n\nТеперь вы можете пользоваться всеми функциями бота.",
+            # Сообщение, по которому пришёл callback, почти всегда с inline-клавиатурой.
+            # Метод edit_message_text в таком случае ожидает InlineKeyboardMarkup,
+            # но get_main_menu() возвращает ReplyKeyboardMarkup, из‑за чего Telegram
+            # периодически отдаёт ошибку BadRequest: Inline keyboard expected.
+            # Вместо редактирования старого сообщения удаляем его и отправляем новое
+            # с обычной (reply) клавиатурой.
+            try:
+                await query.message.delete()
+            except Exception:
+                # Если сообщение уже удалено/недоступно, просто игнорируем и шлём новое.
+                pass
+
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
+                text=(
+                    "✅ <b>Спасибо за подписку!</b>\n\n"
+                    "Теперь вы можете пользоваться всеми функциями бота."
+                ),
                 reply_markup=get_main_menu(),
                 parse_mode='HTML'
             )
         else:
-            await query.answer("❌ Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.", show_alert=True)
+            await query.answer(
+                "❌ Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.",
+                show_alert=True
+            )
 
 
 async def handle_about_navigation(query, context, data):
