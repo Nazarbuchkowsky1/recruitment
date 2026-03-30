@@ -25,6 +25,7 @@ BOT_TOKEN = "8358942377:AAEVJKtj3SCAOhgKzvFqynrjFH_kabcKbpM"
 ADMIN_CHAT_ID = "YOUR_ADMIN_CHAT_ID"
 
 CHANNEL_ID = "-1002949398344"
+CHANNEL_JOIN_LINK = os.getenv("CHANNEL_JOIN_LINK", "https://t.me/+x-BjHunNK5MwOGZi")
 
 APPLICATIONS_CHANNEL_ID = "-1003149841343"
 
@@ -61,17 +62,17 @@ async def safe_edit_message(query, text, reply_markup=None, parse_mode='HTML'):
         )
 
 async def get_channel_link(bot):
-    """Получает ссылку на канал (username или invite link)"""
+    """Получает ссылку на канал для кнопки перехода"""
     try:
         chat = await bot.get_chat(CHANNEL_ID)
         if chat.username:
             return f"https://t.me/{chat.username}"
-        else:
-            # Если нет username, используем публичную ссылку
-            return "https://t.me/centre_of_employment"
+        if getattr(chat, "invite_link", None):
+            return chat.invite_link
+        return CHANNEL_JOIN_LINK
     except Exception as e:
         logger.error(f"Ошибка получения ссылки на канал: {e}")
-        return "https://t.me/centre_of_employment"
+        return CHANNEL_JOIN_LINK
 
 async def check_subscription(bot, user_id):
     """Проверяет подписан ли пользователь на канал"""
@@ -2201,8 +2202,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         channel_link = await get_channel_link(context.bot)
         keyboard = [
-            [InlineKeyboardButton("📢 Перейти до каналу", url=channel_link)],
-            [InlineKeyboardButton("✅ Я підписався", callback_data="check_subscription")]
+            [InlineKeyboardButton("📢 Перейти к каналу", url=channel_link)],
+            [InlineKeyboardButton("✅ Я подписался", callback_data="check_subscription")]
         ]
         
         await query.edit_message_text(
@@ -4317,6 +4318,27 @@ async def start_visa_form(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query:
         user_id = query.from_user.id
         
+        if not await check_subscription(context.bot, user_id):
+            await query.answer()
+            channel_link = await get_channel_link(context.bot)
+            subscription_text = """🔥 <b>Лучшие вакансии — только для подписчиков!</b>
+
+Мы публикуем самые свежие и выгодные предложения работы в канале Центр Трудоустройства | раньше, чем где-либо ещё.
+
+<b>Подпишитесь сейчас, чтобы не пропустить шанс на отличную работу!</b>
+
+После подписки нажмите «✅ Я подписался» и анкета запустится автоматически."""
+            keyboard = [
+                [InlineKeyboardButton("📢 Перейти к каналу", url=channel_link)],
+                [InlineKeyboardButton("✅ Я подписался", callback_data="check_subscription_and_start_visa")]
+            ]
+            await query.edit_message_text(
+                subscription_text,
+                reply_markup=InlineKeyboardMarkup(keyboard),
+                parse_mode='HTML'
+            )
+            return ConversationHandler.END
+        
         # Перевіряємо, чи вже заповнював користувач форму
         if check_user_filled_visa(user_id):
             await query.answer()
@@ -5106,7 +5128,7 @@ def main():
     
     # Візова анкета handler
     visa_form_handler = ConversationHandler(
-        entry_points=[CallbackQueryHandler(start_visa_form, pattern="^start_visa_form$")],
+        entry_points=[CallbackQueryHandler(start_visa_form, pattern="^(start_visa_form|check_subscription_and_start_visa)$")],
         states={
             VISA_Q1: [MessageHandler(filters.TEXT & ~filters.COMMAND, visa_q1_handler)],
             VISA_Q2: [MessageHandler(filters.TEXT & ~filters.COMMAND, visa_q2_handler)],
