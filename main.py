@@ -2191,7 +2191,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = query.from_user.id
     
     # Виключаємо перевірку підписки для кнопки нагадувань
-    if query.data != "check_subscription" and query.data != "notification_show_vacancies" and not await check_subscription(context.bot, user_id):
+    if query.data not in ("check_subscription", "check_subscription_and_start_visa", "notification_show_vacancies") and not await check_subscription(context.bot, user_id):
         subscription_text = f"""🔥 <b>Лучшие вакансии — только для подписчиков!</b>
 
 Мы публикуем самые свежие и выгодные предложения работы в канале Центр Трудоустройства | раньше, чем где-либо ещё.
@@ -4009,10 +4009,23 @@ Empress Business Centre (2-й этаж)
         else:
             await handle_scam_navigation(query, context, data)
     
+    elif data == "check_subscription_and_start_visa":
+        if await check_subscription(context.bot, user_id):
+            context.user_data['pending_visa_after_subscribe'] = False
+            return await start_visa_form(update, context)
+        await query.answer(
+            "❌ Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.",
+            show_alert=True
+        )
+        return
+
     elif data == "check_subscription":
         user_id = query.from_user.id
 
         if await check_subscription(context.bot, user_id):
+            if context.user_data.get('pending_visa_after_subscribe'):
+                context.user_data['pending_visa_after_subscribe'] = False
+                return await start_visa_form(update, context)
             # Сообщение, по которому пришёл callback, почти всегда с inline-клавиатурой.
             # Метод edit_message_text в таком случае ожидает InlineKeyboardMarkup,
             # но get_main_menu() возвращает ReplyKeyboardMarkup, из‑за чего Telegram
@@ -4319,6 +4332,7 @@ async def start_visa_form(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = query.from_user.id
         
         if not await check_subscription(context.bot, user_id):
+            context.user_data['pending_visa_after_subscribe'] = True
             await query.answer()
             channel_link = await get_channel_link(context.bot)
             subscription_text = """🔥 <b>Лучшие вакансии — только для подписчиков!</b>
