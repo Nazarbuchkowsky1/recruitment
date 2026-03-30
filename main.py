@@ -2189,9 +2189,33 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         raise  # Інакше пробрасываем помилку далі
     
     user_id = query.from_user.id
+    data = query.data
+
+    # Специальный поток для старта визовой анкеты:
+    # если пользователь не подписан, после подписки возвращаем именно в visa flow.
+    if data == "start_visa_form" and not await check_subscription(context.bot, user_id):
+        context.user_data['pending_visa_after_subscribe'] = True
+        channel_link = await get_channel_link(context.bot)
+        subscription_text = """🔥 <b>Лучшие вакансии — только для подписчиков!</b>
+
+Мы публикуем самые свежие и выгодные предложения работы в канале Центр Трудоустройства | раньше, чем где-либо ещё.
+
+<b>Подпишитесь сейчас, чтобы не пропустить шанс на отличную работу!</b>
+
+После подписки нажмите «✅ Я подписался» и анкета запустится автоматически."""
+        keyboard = [
+            [InlineKeyboardButton("📢 Перейти к каналу", url=channel_link)],
+            [InlineKeyboardButton("✅ Я подписался", callback_data="check_subscription_and_start_visa")]
+        ]
+        await query.edit_message_text(
+            subscription_text,
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode='HTML'
+        )
+        return
     
     # Виключаємо перевірку підписки для кнопки нагадувань
-    if query.data not in ("check_subscription", "check_subscription_and_start_visa", "notification_show_vacancies") and not await check_subscription(context.bot, user_id):
+    if data not in ("check_subscription", "check_subscription_and_start_visa", "notification_show_vacancies") and not await check_subscription(context.bot, user_id):
         subscription_text = f"""🔥 <b>Лучшие вакансии — только для подписчиков!</b>
 
 Мы публикуем самые свежие и выгодные предложения работы в канале Центр Трудоустройства | раньше, чем где-либо ещё.
@@ -2212,8 +2236,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='HTML'
         )
         return
-    
-    data = query.data
     
     # Обробник для кнопки в нагадувальних повідомленнях
     if data == "notification_show_vacancies":
