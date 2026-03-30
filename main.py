@@ -1293,6 +1293,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     
+    # Для звичайного /start очищаємо можливий "хвіст" повернення у візову анкету
+    context.user_data.pop('pending_visa_after_subscribe', None)
+    
     if not args:
         welcome_text = f"""👋 <b>Приветствуем вас, {user_name}!</b>
 
@@ -4033,7 +4036,7 @@ Empress Business Centre (2-й этаж)
     
     elif data == "check_subscription_and_start_visa":
         if await check_subscription(context.bot, user_id):
-            context.user_data['pending_visa_after_subscribe'] = False
+            context.user_data.pop('pending_visa_after_subscribe', None)
             return await start_visa_form(update, context)
         await query.answer(
             "❌ Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.",
@@ -4045,9 +4048,6 @@ Empress Business Centre (2-й этаж)
         user_id = query.from_user.id
 
         if await check_subscription(context.bot, user_id):
-            if context.user_data.get('pending_visa_after_subscribe'):
-                context.user_data['pending_visa_after_subscribe'] = False
-                return await start_visa_form(update, context)
             # Сообщение, по которому пришёл callback, почти всегда с inline-клавиатурой.
             # Метод edit_message_text в таком случае ожидает InlineKeyboardMarkup,
             # но get_main_menu() возвращает ReplyKeyboardMarkup, из‑за чего Telegram
